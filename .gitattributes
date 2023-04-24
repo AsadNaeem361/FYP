@@ -1,0 +1,6 @@
+jupyter/Accuracy_Paradox-Credit_Card_Data.ipynb filter=lfs diff=lfs merge=lfs -text
+jupyter/Training_set_75.csv filter=lfs diff=lfs merge=lfs -text
+Test_set_25.csv filter=lfs diff=lfs merge=lfs -text
+Training_set_25.csv filter=lfs diff=lfs merge=lfs -text
+Training_set_75.csv filter=lfs diff=lfs merge=lfs -text
+creditcard.csv filter=lfs diff=lfs merge=lfs -text
