@@ -24,7 +24,7 @@ def page2():
         # Read the CSV data using pandas
         df = pd.read_csv(uploaded_file)
     else:
-        df = st.cache_data(pd.read_csv)('C:/users/asadn/desktop/FYP/myapp-heroku/creditcard.csv')
+        df = st.cache_data(pd.read_csv)('creditcard.csv')
     # Print shape and description of the data
     if st.sidebar.checkbox('Show what the dataframe looks like'):
         st.write(df.head(100))
@@ -245,7 +245,7 @@ def page1():
 
 
     # Load the saved model
-    model = joblib.load("C:/users/asadn/desktop/model.joblib")
+    model = joblib.load("model.joblib")
 
     st.write('You can select the entire dataset or 100 random rows to feed to the model')
     option = st.radio("Select", ["Select all rows", "Select 100 random rows", "Input manually values of features"])
