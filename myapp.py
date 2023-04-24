@@ -15,8 +15,8 @@ import traceback
 warnings.filterwarnings("ignore")
 
 import streamlit as st
-# df=st.cache(pd.read_csv)('https://media.githubusercontent.com/media/AsadNaeem361/myapp-heroku/main/creditcard.csv')
-df=st.cache_data(pd.read_csv)('creditcard.csv')
+df=st.cache(pd.read_csv)('https://media.githubusercontent.com/media/AsadNaeem361/fyp/main/creditcard.csv')
+# df=st.cache_data(pd.read_csv)('creditcard.csv')
 
 def page2():
     uploaded_file = st.file_uploader("Upload Files",type=['csv'], key="fileuploader2")
@@ -24,7 +24,7 @@ def page2():
         # Read the CSV data using pandas
         df = pd.read_csv(uploaded_file)
     else:
-        df = st.cache_data(pd.read_csv)('creditcard.csv')
+        df = st.cache_data(pd.read_csv)('https://media.githubusercontent.com/media/AsadNaeem361/fyp/main/creditcard.csv')
     # Print shape and description of the data
     if st.sidebar.checkbox('Show what the dataframe looks like'):
         st.write(df.head(100))
@@ -76,7 +76,7 @@ def page2():
     from sklearn.linear_model import LogisticRegression
     from sklearn.neighbors import KNeighborsClassifier
     from sklearn.svm import SVC
-    from sklearn.ensemble import RandomForestClassifier,ExtraTreesClassifier
+    from sklearn.ensemble import RandomForestClassifier
     from xgboost import XGBClassifier
     from sklearn.model_selection import cross_val_score
 
@@ -241,7 +241,7 @@ def page1():
         df = pd.read_csv(uploaded_file)
         st.write(df)
     else:
-        df=st.cache_data(pd.read_csv)('Test_set_25.csv')
+        df=st.cache_data(pd.read_csv)('https://media.githubusercontent.com/media/AsadNaeem361/fyp/main/Test_set_25.csv')
 
 
     # Load the saved model
@@ -257,6 +257,7 @@ def page1():
 
     if option == "Select 100 random rows":
         #100 random records displayed
+        st.write(df.describe())
         rand_df=df.sample(n=100)
         if st.button('Run model'):
             st.write("rand_df shape:", rand_df.shape)
