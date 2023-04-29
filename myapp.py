@@ -15,10 +15,11 @@ import traceback
 warnings.filterwarnings("ignore")
 
 import streamlit as st
-df=st.cache(pd.read_csv)('https://media.githubusercontent.com/media/AsadNaeem361/fyp/main/creditcard.csv')
+df=st.cache_data(pd.read_csv)('https://media.githubusercontent.com/media/AsadNaeem361/fyp/main/creditcard.csv')
 # df=st.cache_data(pd.read_csv)('creditcard.csv')
 
 def page2():
+    st.info("If you have a file to upload, please use the file uploader (the file should have the same structure as the default). Otherwise, you can continue with the default dataset.")
     uploaded_file = st.file_uploader("Upload Files",type=['csv'], key="fileuploader2")
     if uploaded_file is not None:    
         # Read the CSV data using pandas
@@ -80,11 +81,12 @@ def page2():
     from xgboost import XGBClassifier
     from sklearn.model_selection import cross_val_score
 
-    logreg=LogisticRegression()
-    svm=SVC()
-    knn=KNeighborsClassifier()
-    rforest=RandomForestClassifier(random_state=42)
-    xgboost = XGBClassifier(random_state=42)
+    #initialization of models that performed best
+    logreg=LogisticRegression(C=10, max_iter= 15000)
+    svm=SVC(kernel='poly', degree=7)
+    knn=KNeighborsClassifier(n_neighbors=3)
+    rforest=RandomForestClassifier(max_depth= 7, n_estimators= 200)
+    xgboost = XGBClassifier(learning_rate= 0.1, max_depth= 7)
 
     # features=X_train.columns.tolist()
 
@@ -137,6 +139,31 @@ def page2():
     # X_train_sfs=X_train[top_features]
     # X_test_sfs=X_test[top_features]
 
+    # if st.sidebar.checkbox('Perform feature selection that chooses top 10 features', key='fs'):
+    #     from sklearn.feature_selection import mutual_info_classif
+    #     # select k best features based on mutual information
+        # k = 10
+        # mi_scores = mutual_info_classif(X_train, y_train, random_state=42)
+        # selected_idx = mi_scores.argsort()[-k:]
+        # # X_train = X_train.iloc[:, selected_idx]
+        # st.write(X_train.shape)
+        # # st.text(k_best_features_mi)
+        
+        # # # get the indices of the k best features
+        # # selected_idx = mi_scores.argsort()[-k:]
+
+        # # # get the names of the k best features
+        # selected_features = [df.columns[i] for i in selected_idx]
+
+        # # # select the k best features
+        # X_train = X_train[:, selected_idx]
+        # X_test = X_test[:, selected_idx]
+        # st.text(X_train.shape)
+
+        # # # print the names and scores of the k best features
+        # # st.write('K best features based on mutual information:')
+        # for feature, score in zip(selected_features, mi_scores[selected_idx]):
+        #     st.text(f'{feature}: {score}')
 
     X_train_sfs=X_train
     X_test_sfs=X_test
@@ -234,7 +261,7 @@ def compute_performance2(model,X_test,y_test):
     st.write('Execution Time for performance computation: %.2f minutes'%(elapsed/60))
 
 def page1():    
-
+    st.info("If you have a file to upload, please use the file uploader (the file should have the same structure as the default). Otherwise, you can continue with the default dataset.")
     uploaded_file = st.file_uploader("Upload Files",type=['csv'], key="fileuploader1")
     if uploaded_file is not None:    
         # Read the CSV data using pandas
@@ -247,8 +274,8 @@ def page1():
     # Load the saved model
     model = joblib.load("model.joblib")
 
-    st.write('You can select the entire dataset or 100 random rows to feed to the model')
-    option = st.radio("Select", ["Select all rows", "Select 100 random rows", "Input manually values of features"])
+    st.info('You can select the entire dataset or 100 random rows to feed to the model or input feature values manually')
+    option = st.radio("Select", ["Select all rows", "Select 100 random rows", "Input feature values manually"])
 
     if option == "Select all rows":
         if st.button('Run model'):

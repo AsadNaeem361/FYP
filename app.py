@@ -87,9 +87,13 @@ def main():
     if option == 'Sign up':
         email = st.sidebar.text_input("Email")
         password = st.sidebar.text_input("Password", type="password")
+        confPassword = st.sidebar.text_input("Confirm Password", type="password")
         submit = st.sidebar.button('Create my account')
-        if submit:
-            signup(email, password)
+        if submit and (password == confPassword):
+            try:
+                signup(email, password)
+            except: 
+                st.error("Cannot create an account, check if passwords match.")
 
     if option == "Reset Password":
         email = st.sidebar.text_input("Email")
@@ -102,6 +106,7 @@ def main():
         if st.sidebar.checkbox("Login"):     
             if login(email, password):
                 user_session['logged_in'] = True
+                st.info("Select what page you want to use from the dropdown")
                 app.add_app("Best model predictor", myapp.page1)
                 app.add_app("Build your own model", myapp.page2)
                 
