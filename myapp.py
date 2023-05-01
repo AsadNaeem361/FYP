@@ -1,5 +1,4 @@
 import timeit
-from urllib.request import urlopen
 import pandas as pd
 import matplotlib.pyplot as plt
 import plotly.express as px
@@ -10,14 +9,75 @@ import joblib
 from sklearn.metrics import  confusion_matrix,classification_report,matthews_corrcoef
 import random
 import traceback
-
-
 warnings.filterwarnings("ignore")
 
 import streamlit as st
 df=st.cache_data(pd.read_csv)('https://media.githubusercontent.com/media/AsadNaeem361/fyp/main/creditcard.csv')
-# df=st.cache_data(pd.read_csv)('creditcard.csv')
 
+
+#function for best model predictor
+def page1():    
+    st.info("If you have a file to upload, please use the file uploader (the file should have the same structure as the default). Otherwise, you can continue with the default dataset.")
+    uploaded_file = st.file_uploader("Upload Files",type=['csv'], key="fileuploader1")
+    if uploaded_file is not None:    
+        # Read the CSV data using pandas
+        df = pd.read_csv(uploaded_file)
+        st.write(df)
+    else:
+        df=st.cache_data(pd.read_csv)('https://media.githubusercontent.com/media/AsadNaeem361/fyp/main/Test_set_25.csv')
+
+
+    # Load the saved model
+    model = joblib.load("model.joblib")
+
+    st.info('You can select the entire dataset or 100 random rows to feed to the model or input feature values manually')
+    option = st.radio("Select", ["Select all rows", "Select 100 random rows", "Input feature values manually"])
+
+    if option == "Select all rows":
+        if st.button('Run model'):
+            X_test, y_test = df.iloc[:, :-1], df.iloc[:, -1]
+            compute_performance2(model, X_test, y_test)
+
+    if option == "Select 100 random rows":
+        #100 random records displayed
+        st.write(df.describe())
+        rand_df=df.sample(n=100)
+        if st.button('Run model'):
+            st.write("rand_df shape:", rand_df.shape)
+            st.write("rand_df contents:", rand_df)
+            X_test, y_test = rand_df.iloc[:, :-1], rand_df.iloc[:, -1]
+            compute_performance2(model, X_test, y_test)
+    
+    if option == "Input manually values of features":
+        # Create a dictionary to store the input values
+        input_dict = {}
+
+        # Ask the user to input values for features v1-v28
+        col1, col2, col3 = st.columns(3)
+        for i in range(1, 29, 3):
+            input_dict[f'v{i}'] = col1.number_input(f'Enter value for v{i}:', min_value=-1.0, max_value=1.0, step=0.01, key=f'v{i}')
+            if i+1 <= 28:
+                input_dict[f'v{i+1}'] = col2.number_input(f'Enter value for v{i+1}:', min_value=-1.0, max_value=1.0, step=0.01, key=f'v{i+1}')
+            if i+2 <= 28:
+                input_dict[f'v{i+2}'] = col3.number_input(f'Enter value for v{i+2}:', min_value=-1.0, max_value=1.0, step=0.01, key=f'v{i+2}')
+ 
+        # Add a button to fill in remaining values
+        if st.button('Run the prediction'):
+            data = [input_dict]
+            X_test_input_dict = pd.DataFrame(data)
+            X_test_input_dict['amount'] = 2.22
+            X_test_input_dict['time'] = 2.22
+            if model.predict(X_test_input_dict)[0] == 1:
+                st.error('Fraud Detected')
+            else:
+                st.write('Valid transaction')
+                st.balloons()
+
+        # Display the input values to the user
+        st.write('Input values:')
+        st.write(input_dict)
+
+# ffunction for build your own model page
 def page2():
     st.info("If you have a file to upload, please use the file uploader (the file should have the same structure as the default). Otherwise, you can continue with the default dataset.")
     uploaded_file = st.file_uploader("Upload Files",type=['csv'], key="fileuploader2")
@@ -88,83 +148,6 @@ def page2():
     rforest=RandomForestClassifier(max_depth= 7, n_estimators= 200)
     xgboost = XGBClassifier(learning_rate= 0.1, max_depth= 7)
 
-    # features=X_train.columns.tolist()
-
-
-    # #Feature selection through feature importance
-    # @st.cache_resource
-    # def feature_sort(_model,X_train,y_train):
-    #     #feature selection
-    #     mod=model
-    #     # fit the model
-    #     mod.fit(X_train, y_train)
-    #     # get importance
-    #     imp = mod.feature_importances_
-    #     return imp
-
-    # Classifiers for feature importance
-    # clf=['Extra Trees','Random Forest']
-    # clf=['Random Forest']
-    # mod_feature = st.sidebar.selectbox('Which model for feature importance?', clf)
-
-    # start_time = timeit.default_timer()
-    # # if mod_feature=='Extra Trees':
-    # #     model=etree
-    # #     importance=feature_sort(model,X_train,y_train)
-    # if mod_feature=='Random Forest':
-    #     model=rforest
-    #     importance=feature_sort(model,X_train,y_train)
-    # elapsed = timeit.default_timer() - start_time
-    # st.write('Execution Time for feature selection: %.2f minutes'%(elapsed/60))    
-
-    # #Plot of feature importance
-    # if st.sidebar.checkbox('Show plot of feature importance'):
-    #     fig, ax = plt.subplots()
-    #     plt.bar([x for x in range(len(importance))], importance)
-    #     plt.title('Feature Importance')
-    #     plt.xlabel('Feature (Variable Number)')
-    #     plt.ylabel('Importance')
-    #     st.pyplot(fig)
-
-    # feature_imp=list(zip(features,importance))
-    # feature_sort=sorted(feature_imp, key = lambda x: x[1])
-
-    # n_top_features = st.sidebar.slider('Number of top features', min_value=5, max_value=20)
-
-    # top_features=list(list(zip(*feature_sort[-n_top_features:]))[0])
-
-    # if st.sidebar.checkbox('Show selected top features'):
-    #     st.write('Top %d features in order of importance are: %s'%(n_top_features,top_features[::-1]))
-
-    # X_train_sfs=X_train[top_features]
-    # X_test_sfs=X_test[top_features]
-
-    # if st.sidebar.checkbox('Perform feature selection that chooses top 10 features', key='fs'):
-    #     from sklearn.feature_selection import mutual_info_classif
-    #     # select k best features based on mutual information
-        # k = 10
-        # mi_scores = mutual_info_classif(X_train, y_train, random_state=42)
-        # selected_idx = mi_scores.argsort()[-k:]
-        # # X_train = X_train.iloc[:, selected_idx]
-        # st.write(X_train.shape)
-        # # st.text(k_best_features_mi)
-        
-        # # # get the indices of the k best features
-        # # selected_idx = mi_scores.argsort()[-k:]
-
-        # # # get the names of the k best features
-        # selected_features = [df.columns[i] for i in selected_idx]
-
-        # # # select the k best features
-        # X_train = X_train[:, selected_idx]
-        # X_test = X_test[:, selected_idx]
-        # st.text(X_train.shape)
-
-        # # # print the names and scores of the k best features
-        # # st.write('K best features based on mutual information:')
-        # for feature, score in zip(selected_features, mi_scores[selected_idx]):
-        #     st.text(f'{feature}: {score}')
-
     X_train_sfs=X_train
     X_test_sfs=X_test
 
@@ -185,12 +168,10 @@ def page2():
     np.random.seed(42) #for reproducibility since SMOTE and Near Miss use randomizations
 
     smt = SMOTE(sampling_strategy='minority',random_state=0)
-    # nr = NearMiss()
     rus = RandomUnderSampler(sampling_strategy='majority',random_state=0)
 
     alg=['Random Forest','k Nearest Neighbor','Support Vector Machine','Logistic Regression', 'XGBoost']
     classifier = st.sidebar.selectbox('Which algorithm?', alg)
-    # rectifier=['SMOTE','Near Miss','RandomUnderSampler','No Rectifier']
     rectifier=['SMOTE','RandomUnderSampler','No Rectifier']
     imb_rect = st.sidebar.selectbox('Which imbalanced class rectifier?', rectifier)
 
@@ -224,6 +205,7 @@ def page2():
         except Exception as e:
             st.error(f"Error: {traceback.format_exc()}")
 
+#for build your own model page
 def compute_performance1(model, X_train, y_train,X_test,y_test):
     from sklearn.model_selection import cross_val_score
     from sklearn.metrics import ConfusionMatrixDisplay
@@ -245,7 +227,7 @@ def compute_performance1(model, X_train, y_train,X_test,y_test):
     elapsed = timeit.default_timer() - start_time
     st.write('Execution Time for performance computation: %.2f minutes'%(elapsed/60))
     
-
+#for best model predictor page
 def compute_performance2(model,X_test,y_test):
     start_time = timeit.default_timer()
     y_pred = model.predict(X_test)
@@ -259,66 +241,3 @@ def compute_performance2(model,X_test,y_test):
     st.write('Matthews Correlation Coefficient: ',mcc)
     elapsed = timeit.default_timer() - start_time
     st.write('Execution Time for performance computation: %.2f minutes'%(elapsed/60))
-
-def page1():    
-    st.info("If you have a file to upload, please use the file uploader (the file should have the same structure as the default). Otherwise, you can continue with the default dataset.")
-    uploaded_file = st.file_uploader("Upload Files",type=['csv'], key="fileuploader1")
-    if uploaded_file is not None:    
-        # Read the CSV data using pandas
-        df = pd.read_csv(uploaded_file)
-        st.write(df)
-    else:
-        df=st.cache_data(pd.read_csv)('https://media.githubusercontent.com/media/AsadNaeem361/fyp/main/Test_set_25.csv')
-
-
-    # Load the saved model
-    model = joblib.load("model.joblib")
-
-    st.info('You can select the entire dataset or 100 random rows to feed to the model or input feature values manually')
-    option = st.radio("Select", ["Select all rows", "Select 100 random rows", "Input feature values manually"])
-
-    if option == "Select all rows":
-        if st.button('Run model'):
-            X_test, y_test = df.iloc[:, :-1], df.iloc[:, -1]
-            compute_performance2(model, X_test, y_test)
-
-    if option == "Select 100 random rows":
-        #100 random records displayed
-        st.write(df.describe())
-        rand_df=df.sample(n=100)
-        if st.button('Run model'):
-            st.write("rand_df shape:", rand_df.shape)
-            st.write("rand_df contents:", rand_df)
-            X_test, y_test = rand_df.iloc[:, :-1], rand_df.iloc[:, -1]
-            compute_performance2(model, X_test, y_test)
-    
-    if option == "Input manually values of features":
-        # Create a dictionary to store the input values
-        input_dict = {}
-        new_dict = {}
-
-        # Ask the user to input values for features v1-v28
-        col1, col2, col3 = st.columns(3)
-        for i in range(1, 29, 3):
-            input_dict[f'v{i}'] = col1.number_input(f'Enter value for v{i}:', min_value=-1.0, max_value=1.0, step=0.01, key=f'v{i}')
-            if i+1 <= 28:
-                input_dict[f'v{i+1}'] = col2.number_input(f'Enter value for v{i+1}:', min_value=-1.0, max_value=1.0, step=0.01, key=f'v{i+1}')
-            if i+2 <= 28:
-                input_dict[f'v{i+2}'] = col3.number_input(f'Enter value for v{i+2}:', min_value=-1.0, max_value=1.0, step=0.01, key=f'v{i+2}')
- 
-        # Add a button to fill in remaining values
-        if st.button('Run the prediction'):
-            data = [input_dict]
-            X_test_input_dict = pd.DataFrame(data)
-            X_test_input_dict['amount'] = 2.22
-            X_test_input_dict['time'] = 2.22
-            if model.predict(X_test_input_dict)[0] == 1:
-                st.error('Fraud Detected')
-                st.balloons()
-            else:
-                st.write('valid transaction')
-                st.balloons()
-
-        # Display the input values to the user
-        st.write('Input values:')
-        st.write(input_dict)
