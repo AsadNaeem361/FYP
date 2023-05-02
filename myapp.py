@@ -90,6 +90,7 @@ def page2():
     if uploaded_file is not None:    
         # Read the CSV data using pandas
         df = pd.read_csv(uploaded_file)
+        st.write(df)
     else:
         df = st.cache_data(pd.read_csv)('https://media.githubusercontent.com/media/AsadNaeem361/fyp/main/creditcard.csv')
     # Print shape and description of the data
@@ -157,7 +158,6 @@ def page2():
     X_train_sfs_scaled=X_train_sfs
     X_test_sfs_scaled=X_test_sfs
 
-    #Import performance metrics, imbalanced rectifiers
     from sklearn.model_selection import cross_val_score
     from sklearn.metrics import  confusion_matrix,classification_report,matthews_corrcoef
     #Import performance metrics
@@ -166,9 +166,8 @@ def page2():
     from sklearn.model_selection import GridSearchCV
     import matplotlib.pyplot as plt
     from imblearn.over_sampling import SMOTE
-    # from imblearn.under_sampling import NearMiss
     from imblearn.under_sampling import RandomUnderSampler
-    np.random.seed(42) #for reproducibility since SMOTE and Near Miss use randomizations
+    np.random.seed(42) #for reproducibility since SMOTE uses randomizations
 
     smt = SMOTE(sampling_strategy='minority',random_state=0)
     rus = RandomUnderSampler(sampling_strategy='majority',random_state=0)
