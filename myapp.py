@@ -7,6 +7,7 @@ import warnings
 import requests
 import joblib
 from sklearn.metrics import  confusion_matrix,classification_report,matthews_corrcoef
+from sklearn.model_selection import train_test_split
 import random
 import traceback
 warnings.filterwarnings("ignore")
@@ -22,13 +23,14 @@ def page1():
     if uploaded_file is not None:    
         # Read the CSV data using pandas
         df = pd.read_csv(uploaded_file)
+        df=df[['V18','V7','V3','V4','V16','V11','V10','V12','V14','V17','Class']]
         st.write(df)
     else:
         df=st.cache_data(pd.read_csv)('https://media.githubusercontent.com/media/AsadNaeem361/fyp/main/Test_set_25.csv')
-
+        df=df[['V18','V7','V3','V4','V16','V11','V10','V12','V14','V17','Class']]
 
     # Load the saved model
-    model = joblib.load("model.joblib")
+    model = joblib.load("best_model.joblib")
 
     st.info('You can select the entire dataset or 100 random rows to feed to the model or input feature values manually')
     option = st.radio("Select", ["Select all rows", "Select 100 random rows", "Input feature values manually"])
@@ -40,44 +42,48 @@ def page1():
 
     if option == "Select 100 random rows":
         #100 random records displayed
-        st.write(df.describe())
-        rand_df=df.sample(n=100)
+        X=df.drop(['Class'], axis=1)
+        y=df.Class
+        rand_df_X = df.sample(n=95, random_state=42)
+        rand_df_y = df[df['Class'] == 1].sample(n=5, random_state=42)
+        rand_df = pd.concat([rand_df_X, rand_df_y])
+        rand_df = rand_df.sample(frac=1, random_state=42)
         if st.button('Run model'):
             st.write("rand_df shape:", rand_df.shape)
             st.write("rand_df contents:", rand_df)
-            X_test, y_test = rand_df.iloc[:, :-1], rand_df.iloc[:, -1]
-            compute_performance2(model, X_test, y_test)
+            compute_performance2(model, rand_df.iloc[:, :-1], rand_df.iloc[:, -1])
     
-    if option == "Input manually values of features":
+    if option == "Input feature values manually":
         # Create a dictionary to store the input values
         input_dict = {}
+        cols = ['V18', 'V7', 'V3', 'V4', 'V16', 'V11', 'V10', 'V12', 'V14', 'V17', 'Class']
+        col_dict = {}
 
-        # Ask the user to input values for features v1-v28
         col1, col2, col3 = st.columns(3)
-        for i in range(1, 29, 3):
-            input_dict[f'v{i}'] = col1.number_input(f'Enter value for v{i}:', min_value=-1.0, max_value=1.0, step=0.01, key=f'v{i}')
-            if i+1 <= 28:
-                input_dict[f'v{i+1}'] = col2.number_input(f'Enter value for v{i+1}:', min_value=-1.0, max_value=1.0, step=0.01, key=f'v{i+1}')
-            if i+2 <= 28:
-                input_dict[f'v{i+2}'] = col3.number_input(f'Enter value for v{i+2}:', min_value=-1.0, max_value=1.0, step=0.01, key=f'v{i+2}')
- 
+
+        for i, col in enumerate(cols):
+            if i % 3 == 0:
+                col_dict[col] = col1
+            elif i % 3 == 1:
+                col_dict[col] = col2
+            else:
+                col_dict[col] = col3
+
+        for col in cols[:-1]:
+            input_dict[col] = col_dict[col].number_input(f'Enter value for {col}:', step=0.01, key=col)
+
         # Add a button to fill in remaining values
-        if st.button('Run the prediction'):
+        if st.button('Check fraud'):
             data = [input_dict]
             X_test_input_dict = pd.DataFrame(data)
-            X_test_input_dict['amount'] = 2.22
-            X_test_input_dict['time'] = 2.22
+            st.write(X_test_input_dict)
             if model.predict(X_test_input_dict)[0] == 1:
                 st.error('Fraud Detected')
             else:
-                st.write('Valid transaction')
+                st.success('Valid transaction')
                 st.balloons()
 
-        # Display the input values to the user
-        st.write('Input values:')
-        st.write(input_dict)
-
-# ffunction for build your own model page
+# function for build your own model page
 def page2():
     st.info("If you have a file to upload, please use the file uploader (the file should have the same structure as the default). Otherwise, you can continue with the default dataset.")
     uploaded_file = st.file_uploader("Upload Files",type=['csv'], key="fileuploader2")
@@ -104,9 +110,6 @@ def page2():
     #Obtaining X (features) and y (labels)
     X=df.drop(['Class'], axis=1)
     y=df.Class
-
-    # Split the data into training and testing sets
-    from sklearn.model_selection import train_test_split
 
     size = st.sidebar.slider('Test Set Size', min_value=0.2, max_value=0.4)
 
@@ -176,7 +179,7 @@ def page2():
     imb_rect = st.sidebar.selectbox('Which imbalanced class rectifier?', rectifier)
 
     #Run different classification models with rectifiers
-    if st.sidebar.button('Run credit card fraud detection'):
+    if st.sidebar.button('Run model'):
         try:
             if classifier=='Logistic Regression':
                 model=logreg
@@ -229,11 +232,13 @@ def compute_performance1(model, X_train, y_train,X_test,y_test):
     
 #for best model predictor page
 def compute_performance2(model,X_test,y_test):
+    from sklearn.metrics import ConfusionMatrixDisplay
     start_time = timeit.default_timer()
     y_pred = model.predict(X_test)
-    cm=confusion_matrix(y_test,y_pred)
-    st.text('Confusion Matrix: ')
-    st.text(cm)
+    fig, ax = plt.subplots()
+    cm_display = ConfusionMatrixDisplay.from_predictions(y_test, y_pred, display_labels=['non-fraudulent', 'fraudulent'])
+    cm_display.plot(ax=ax, cmap=plt.cm.Blues)
+    st.pyplot(fig)
     cr=classification_report(y_test, y_pred, target_names=['non-fraudulent','fraudulent'])
     st.text('Classification Report: ')
     st.text(cr)
